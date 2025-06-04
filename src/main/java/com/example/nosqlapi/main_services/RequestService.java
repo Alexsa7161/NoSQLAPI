@@ -1,5 +1,6 @@
 package com.example.nosqlapi.main_services;
 
+import com.example.nosqlapi.Procedures;
 import com.example.nosqlapi.main_entity.Request;
 import com.example.nosqlapi.main_repositories.RequestRepository;
 import com.mongodb.client.model.Filters;
@@ -53,17 +54,24 @@ public class RequestService {
     }
 
     public void deleteRequest(UUID id) {
+
         requestRepository.deleteById(id);
 
-
-        mongoTemplate.getCollection("request_parameters")
-                .deleteOne(Filters.eq("request_id", id.toString()));
-
-        neo4jClient.query("CALL com.example.request.deleteRequest($requestId)")
-        .bind(id.toString()).to("requestId")
-        .run();
+        neo4jClient.query("""
+        MATCH (r:Request {request_id: $requestId})
+        DETACH DELETE r
+        """)
+                .bind(id.toString()).to("requestId")
+                .run();
     }
-
+    private void callNeo4jProcedureForRequest(Request request) {
+        Procedures.createRequestRelation(
+                request.getRequest_id(),
+                request.getOrder_id(),
+                request.getRequest_date(),
+                request.getQuantity()
+        );
+    }
     public Optional<Request> getRequest(UUID id) {
         return requestRepository.findById(id);
     }
@@ -86,13 +94,4 @@ public class RequestService {
                 .replaceOne(Filters.eq("request_id", request.getRequest_id().toString()), doc, options);
     }
 
-    private void callNeo4jProcedureForRequest(Request request) {
-        neo4jClient.query("CALL com.example.request.createRequestRelationships($requestId, $supplierId, $productId, $requestDate, $quantity)")
-                .bind(request.getRequest_id().toString()).to("requestId")
-                .bind(request.getSupplier_id().toString()).to("supplierId")
-                .bind(request.getProduct_id().toString()).to("productId")
-                .bind(request.getRequest_date()).to("requestDate")
-                .bind(request.getQuantity()).to("quantity")
-                .run();
-    }
 }

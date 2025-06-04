@@ -21,14 +21,14 @@ public class ShiftController {
         this.shiftService = shiftService;
     }
 
-    // Создать смену
+    
     @PostMapping
     public ResponseEntity<Shift> createShift(@RequestBody Shift shift) {
         Shift created = shiftService.createShift(shift);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // Обновить смену по составному ключу (employeeId и shiftDate)
+    
     @PutMapping("/{employeeId}/{shiftDate}")
     public ResponseEntity<Shift> updateShift(
             @PathVariable UUID employeeId,
@@ -44,7 +44,7 @@ public class ShiftController {
         return ResponseEntity.ok(updated);
     }
 
-    // Удалить смену по ключу
+    
     @DeleteMapping("/{employeeId}/{shiftDate}")
     public ResponseEntity<Void> deleteShift(
             @PathVariable UUID employeeId,
@@ -59,7 +59,7 @@ public class ShiftController {
         return ResponseEntity.noContent().build();
     }
 
-    // Получить смену по ключу
+    
     @GetMapping("/{employeeId}/{shiftDate}")
     public ResponseEntity<Shift> getShift(
             @PathVariable UUID employeeId,
@@ -75,7 +75,7 @@ public class ShiftController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Получить все смены
+    
     @GetMapping
     public List<Shift> getAllShifts() {
         return shiftService.getAllShifts();

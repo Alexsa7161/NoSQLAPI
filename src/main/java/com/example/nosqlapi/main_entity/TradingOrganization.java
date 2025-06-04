@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Table("trading_organization")
@@ -19,24 +21,25 @@ public class TradingOrganization {
     private String type;
     @Setter
     @Getter
-    private double rent_payment;
+    private BigDecimal rent_payment;
+
     @Setter
     @Getter
-    private double utilities_payment;
+    private BigDecimal utilities_payment;
 
-    public double getRent_payment() {
+    public BigDecimal getRent_payment() {
         return rent_payment;
     }
 
-    public void setRent_payment(double rent_payment) {
+    public void setRent_payment(BigDecimal rent_payment) {
         this.rent_payment = rent_payment;
     }
 
-    public double getUtilities_payment() {
+    public BigDecimal getUtilities_payment() {
         return utilities_payment;
     }
 
-    public void setUtilities_payment(double utilities_payment) {
+    public void setUtilities_payment(BigDecimal utilities_payment) {
         this.utilities_payment = utilities_payment;
     }
 

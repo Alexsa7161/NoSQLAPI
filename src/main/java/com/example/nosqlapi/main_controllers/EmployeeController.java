@@ -19,8 +19,6 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
-    // ----------- Основные CRUD-операции -----------
-
     @PostMapping
     public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
         Employee created = employeeService.createEmployee(employee);
@@ -50,8 +48,6 @@ public class EmployeeController {
     public List<Employee> getAllEmployees() {
         return employeeService.getAllEmployees();
     }
-
-    // ----------- Связи с Order и TradingOrganization -----------
 
     @PostMapping("/{employeeId}/link-order")
     public ResponseEntity<Void> linkEmployeeWithOrder(@PathVariable UUID employeeId,

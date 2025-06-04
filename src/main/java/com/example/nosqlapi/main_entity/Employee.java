@@ -24,4 +24,20 @@ public class Employee {
     public void setFullName(Object fullName) {this.full_name = (String) fullName;}
 
     public void setEmployeeType(Object employeeType) {this.employee_type = (String) employeeType;}
+
+    public String getFull_name() {
+        return full_name;
+    }
+
+    public void setFull_name(String full_name) {
+        this.full_name = full_name;
+    }
+
+    public String getEmployee_type() {
+        return employee_type;
+    }
+
+    public void setEmployee_type(String employee_type) {
+        this.employee_type = employee_type;
+    }
 }

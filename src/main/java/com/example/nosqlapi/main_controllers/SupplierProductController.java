@@ -34,7 +34,7 @@ public class SupplierProductController {
         SupplierProductKey key = new SupplierProductKey();
         key.setSupplier_id(supplierId);
         key.setProduct_id(productId);
-        return ResponseEntity.ok(service.update(key, supplierProduct));
+        return ResponseEntity.ok(service.update(key.getSupplier_id(), key.getProduct_id(), supplierProduct));
     }
 
     @DeleteMapping("/{supplierId}/{productId}")
@@ -45,7 +45,7 @@ public class SupplierProductController {
         SupplierProductKey key = new SupplierProductKey();
         key.setSupplier_id(supplierId);
         key.setProduct_id(productId);
-        service.delete(key);
+        service.delete(key.getSupplier_id(), key.getProduct_id());
         return ResponseEntity.noContent().build();
     }
 
@@ -54,16 +54,12 @@ public class SupplierProductController {
             @PathVariable UUID supplierId,
             @PathVariable UUID productId) {
 
-        SupplierProductKey key = new SupplierProductKey();
-        key.setSupplier_id(supplierId);
-        key.setProduct_id(productId);
-        return service.get(key)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+        SupplierProduct result = service.get(supplierId, productId);
 
-    @GetMapping
-    public List<SupplierProduct> getAll() {
-        return service.getAll();
+        if (result != null) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

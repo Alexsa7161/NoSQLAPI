@@ -14,4 +14,6 @@ public class Order {
     private UUID employee_id;
     public UUID getOrder_number() {return order_number;}
     public void setOrder_number(UUID order_number) {this.order_number = order_number;}
+    public UUID getEmployee_id() {return employee_id;}
+    public void setEmployee_id(UUID employee_id) {this.employee_id = employee_id;}
 }

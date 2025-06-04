@@ -4,7 +4,7 @@ import lombok.Setter;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
 
-import java.util.UUID;
+import java.math.BigDecimal;
 
 @Table("supplier_product")
 public class SupplierProduct {
@@ -12,7 +12,8 @@ public class SupplierProduct {
     @Getter @Setter
     private SupplierProductKey key;
     @Getter @Setter
-    private double price;
+    private BigDecimal price;
+
 
     public SupplierProductKey getKey() {
         return key;
@@ -22,11 +23,11 @@ public class SupplierProduct {
         this.key = key;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 }

@@ -2,7 +2,9 @@ package com.example.nosqlapi.main_controllers;
 
 
 import com.example.nosqlapi.main_entity.Order;
+import com.example.nosqlapi.main_entity.OrderEmployeeRequestDTO;
 import com.example.nosqlapi.main_services.OrderService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +21,10 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    // Создание заказа и связка с сотрудником
+    
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody Order order, @RequestParam UUID employeeId) {
+        order.setEmployee_id(employeeId);
         Order created = orderService.createOrder(order, employeeId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -46,4 +49,12 @@ public class OrderController {
         }
         return ResponseEntity.ok(order);
     }
+
+
+        @GetMapping("/aggregated/{orderNumber}")
+        public ResponseEntity<OrderEmployeeRequestDTO> getAggregatedOrderData(@PathVariable String orderNumber) throws JsonProcessingException {
+            UUID orderUUID = UUID.fromString(orderNumber);
+            OrderEmployeeRequestDTO dto = orderService.getAggregatedOrderData(orderUUID);
+            return ResponseEntity.ok(dto);
+        }
 }

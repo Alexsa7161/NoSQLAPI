@@ -55,13 +55,12 @@ public class PaymentService {
     public void deletePayment(UUID id) {
         paymentRepository.deleteById(id);
 
-        // Удаляем из MongoDB
-        mongoTemplate.getCollection("payment_parameters")
-                .deleteOne(Filters.eq("payment_id", id.toString()));
-
-        neo4jClient.query("CALL payment.delete($paymentId)")
-        .bind(id.toString()).to("paymentId")
-        .run();
+        neo4jClient.query("""
+        
+        DETACH DELETE p
+        """)
+                .bind(id.toString()).to("paymentId")
+                .run();
     }
 
     public Optional<Payment> getPayment(UUID id) {
@@ -86,12 +85,6 @@ public class PaymentService {
     }
 
     private void callNeo4jProcedureForPayment(Payment payment) {
-        // Вызов Neo4j процедуры, создающей связь TradingOrganization -[:MADE_PAYMENT]-> Payment
-        neo4jClient.query("CALL com.example.payment.createMadePaymentRelation($tradingOrganizationId, $paymentId, $amount, $paymentType)")
-                .bind(payment.getTrading_organization_id().toString()).to("tradingOrganizationId")
-                .bind(payment.getId().toString()).to("paymentId")
-                .bind(payment.getAmount()).to("amount")
-                .bind(payment.getPayment_type()).to("paymentType")
-                .run();
+        com.example.nosqlapi.Procedures.createMadePaymentRelation(payment.getTrading_organization_id(),payment.getId().toString(),payment.getAmount().longValue(),payment.getPayment_type());
     }
 }

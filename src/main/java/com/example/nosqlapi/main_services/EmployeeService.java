@@ -4,6 +4,9 @@ import com.example.nosqlapi.main_entity.Employee;
 import com.example.nosqlapi.main_repositories.EmployeeRepository;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +20,9 @@ import com.mongodb.client.model.ReplaceOptions;
 @Service
 public class EmployeeService {
 
-    private final EmployeeRepository employeeRepository; // Cassandra
-    private final MongoTemplate mongoTemplate;           // MongoDB
-    private final Neo4jClient neo4jClient;               // Neo4j
+    private final EmployeeRepository employeeRepository; 
+    private final MongoTemplate mongoTemplate;           
+    private final Neo4jClient neo4jClient;               
 
     public EmployeeService(EmployeeRepository employeeRepository,
                            MongoTemplate mongoTemplate,
@@ -50,15 +53,28 @@ public class EmployeeService {
     public void deleteEmployee(UUID id) {
         employeeRepository.deleteById(id);
 
-        // Удаление из MongoDB
         mongoTemplate.getCollection("employee_parameters")
                 .deleteOne(Filters.eq("employee_id", id.toString()));
 
-        // ❗Если есть процедура для удаления в Neo4j — можно вызвать её здесь:
-        // neo4jClient.query("CALL employee.delete($id)")
-        //     .bind(id.toString()).to("id").run();
+        neo4jClient.query("""
+        MATCH (e:Employee {id: $id})
+        DETACH DELETE e
+        """)
+                .bind(id.toString()).to("id")
+                .run();
     }
+    public void createOrUpdateEmployeeInNeo4j(Employee employee) {
+        String query = """
+        MERGE (e:Employee {employee_id: $employee_id})
+        SET e.full_name = $full_name
+        RETURN e
+    """;
 
+        neo4jClient.query(query)
+                .bind(employee.getId().toString()).to("employee_id")
+                .bind(employee.getFull_name()).to("full_name")
+                .run();
+    }
     public Optional<Employee> getEmployee(UUID id) {
         return employeeRepository.findById(id);
     }
@@ -67,44 +83,23 @@ public class EmployeeService {
         return employeeRepository.findAll();
     }
 
-    private void saveEmployeeParametersToMongo(Employee employee) {
-        Document doc = new Document()
-                .append("employee_id", employee.getId().toString())
-                .append("full_name", employee.getFullName())
-                .append("employee_type", employee.getEmployeeType());
+    public void saveEmployeeParametersToMongo(Employee employee) {
+        Query query = new Query(Criteria.where("employee_id").is(employee.getId().toString()));
 
-        ReplaceOptions options = new ReplaceOptions().upsert(true);
+        Update update = new Update()
+                .set("full_name", employee.getFullName())
+                .set("employee_type", employee.getEmployeeType());
 
-        mongoTemplate.getCollection("employee_parameters")
-                .replaceOne(Filters.eq("employee_id", employee.getId().toString()), doc, options);
+        mongoTemplate.upsert(query, update, "employee_parameters");
     }
 
-    private void createOrUpdateEmployeeInNeo4j(Employee employee) {
-        neo4jClient.query("CALL com.example.employee.createOrUpdate($id, $fullName, $employeeType)")
-                .bind(employee.getId().toString()).to("id")
-                .bind(employee.getFullName()).to("fullName")
-                .bind(employee.getEmployeeType()).to("employeeType")
-                .run();
-    }
-
-    /**
-     * Связывает сотрудника с заказом в Neo4j через :PLACED
-     */
+    
     public void linkEmployeeWithOrder(UUID employeeId, String orderNumber) {
-        neo4jClient.query("CALL com.example.employee.createPlacedOrderRelation($employeeId, $orderNumber)")
-                .bind(employeeId.toString()).to("employeeId")
-                .bind(orderNumber).to("orderNumber")
-                .run();
+        com.example.nosqlapi.Procedures.createPlacedOrderRelation(String.valueOf(employeeId),orderNumber);
     }
 
-    /**
-     * Связывает сотрудника с организацией в Neo4j через :WORKS_AT {shift_date}
-     */
+    
     public void linkEmployeeWithOrganization(UUID employeeId, String organizationId, String shiftDate) {
-        neo4jClient.query("CALL com.example.employee.createWorksAtRelation($employeeId, $organizationId, $shiftDate)")
-                .bind(employeeId.toString()).to("employeeId")
-                .bind(organizationId).to("organizationId")
-                .bind(shiftDate).to("shiftDate")
-                .run();
+        com.example.nosqlapi.Procedures.createWorksAtRelation(String.valueOf(employeeId),organizationId,shiftDate);
     }
 }

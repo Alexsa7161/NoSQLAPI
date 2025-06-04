@@ -28,6 +28,7 @@ public class PaymentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Payment> updatePayment(@PathVariable UUID id, @RequestBody Payment payment) {
+        payment.setId(id);
         Payment updated = paymentService.updatePayment(id, payment);
         return ResponseEntity.ok(updated);
     }
