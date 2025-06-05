@@ -1,5 +1,6 @@
 package com.example.nosqlapi.main_services;
 
+import com.example.nosqlapi.Neo4jFailoverClient;
 import com.example.nosqlapi.main_entity.Employee;
 import com.example.nosqlapi.main_repositories.EmployeeRepository;
 import org.bson.Document;
@@ -9,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
-
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,11 +23,11 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository; 
     private final MongoTemplate mongoTemplate;           
-    private final Neo4jClient neo4jClient;               
+    private final Neo4jFailoverClient neo4jClient;
 
     public EmployeeService(EmployeeRepository employeeRepository,
                            MongoTemplate mongoTemplate,
-                           Neo4jClient neo4jClient) {
+                           Neo4jFailoverClient neo4jClient) {
         this.employeeRepository = employeeRepository;
         this.mongoTemplate = mongoTemplate;
         this.neo4jClient = neo4jClient;
@@ -56,12 +57,13 @@ public class EmployeeService {
         mongoTemplate.getCollection("employee_parameters")
                 .deleteOne(Filters.eq("employee_id", id.toString()));
 
-        neo4jClient.query("""
+        String cypher = """
         MATCH (e:Employee {id: $id})
         DETACH DELETE e
-        """)
-                .bind(id.toString()).to("id")
-                .run();
+    """;
+
+        Map<String, Object> params = Map.of("id", id.toString());
+        neo4jClient.runQuery(cypher, params);
     }
     public void createOrUpdateEmployeeInNeo4j(Employee employee) {
         String query = """
@@ -70,11 +72,14 @@ public class EmployeeService {
         RETURN e
     """;
 
-        neo4jClient.query(query)
-                .bind(employee.getId().toString()).to("employee_id")
-                .bind(employee.getFull_name()).to("full_name")
-                .run();
+        Map<String, Object> params = Map.of(
+                "employee_id", employee.getId().toString(),
+                "full_name", employee.getFull_name()
+        );
+
+        neo4jClient.runQuery(query, params);
     }
+
     public Optional<Employee> getEmployee(UUID id) {
         return employeeRepository.findById(id);
     }
